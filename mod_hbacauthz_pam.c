@@ -13,11 +13,35 @@ static authz_status pam_hbac_authorize(request_rec * r, const char * pam_service
 	struct pam_conv pam_conversation = { NULL, NULL };
 	pam_handle_t * pamh = NULL;
 	int ret;
+	const char *scheme;
+	int port;
 	ret = pam_start(pam_service, login, &pam_conversation, &pamh);
 	if (ret == PAM_SUCCESS) {
 		const char * remote_host_or_ip = ap_get_remote_host(r->connection, r->per_dir_config, REMOTE_NAME, NULL);
 		if (remote_host_or_ip) {
 			ret = pam_set_item(pamh, PAM_RHOST, remote_host_or_ip);
+		}
+	}
+	if (ret == PAM_SUCCESS) {
+		if(strstr(r->protocol,"HTTP/")==r->protocol){
+			scheme = "http://";
+		}else{
+			if(strstr(r->protocol,"HTTPS/")==r->protocol){
+				scheme = "https://";
+			}else{
+				scheme = "";
+			}
+		}
+		port = ap_get_server_port(r);
+		const char *host = apr_table_get(r->headers_in, "Host");
+		if(host!=NULL){
+			char *schemeandhost;
+			if(strchr(host,':')!=NULL){
+				schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s%s", scheme, host);
+			}else{
+				schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s%s:%d", scheme, host, port);
+			}
+			ret = pam_putenv(pamh, schemeandhost);
 		}
 	}
 	if (ret == PAM_SUCCESS) {

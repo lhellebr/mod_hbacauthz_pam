@@ -31,8 +31,12 @@ static authz_status pam_hbac_authorize(request_rec * r, const char * pam_service
 		}
 		if(host!=NULL && scheme!=NULL){
 			char *schemeandhost;
-			schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s://%s:%d", scheme, host, port);
-			ret = pam_putenv(pamh, schemeandhost);
+			if(strchr(host,':')!=NULL){
+				schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s://%s", scheme, host);
+			}else{
+				schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s://%s:%d", scheme, host, port);
+			}
+				ret = pam_putenv(pamh, schemeandhost);
 		}
 	}
 	if (ret == PAM_SUCCESS) {

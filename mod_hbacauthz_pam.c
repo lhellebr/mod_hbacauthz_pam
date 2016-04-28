@@ -25,10 +25,15 @@ static authz_status pam_hbac_authorize(request_rec * r, const char * pam_service
 	if (ret == PAM_SUCCESS) {
 		scheme = ap_http_scheme(r);
 		port = ap_get_server_port(r);
-		const char *host = r->server->server_hostname;
-		char *schemeandhost;
-		schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s://%s:%d", scheme, host, port);
-		ret = pam_putenv(pamh, schemeandhost);
+		const char *host = apr_table_get(r->headers_in, "Host");
+		if(host == NULL) {
+			host = apr_pstrdup(r->pool, ap_get_server_name(r));
+		}
+		if(host!=NULL && scheme!=NULL){
+			char *schemeandhost;
+			schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s://%s:%d", scheme, host, port);
+			ret = pam_putenv(pamh, schemeandhost);
+		}
 	}
 	if (ret == PAM_SUCCESS) {
 		char *uri = apr_psprintf(r->pool, "URI=%s", r->uri);

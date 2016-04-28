@@ -23,19 +23,11 @@ static authz_status pam_hbac_authorize(request_rec * r, const char * pam_service
 		}
 	}
 	if (ret == PAM_SUCCESS) {
-		if(strstr(r->protocol,"HTTP/")==r->protocol){
-			scheme = "http://";
-		}else{
-			if(strstr(r->protocol,"HTTPS/")==r->protocol){
-				scheme = "https://";
-			}else{
-				scheme = "";
-			}
-		}
+		scheme = ap_http_scheme(r);
 		port = ap_get_server_port(r);
 		const char *host = r->server->server_hostname;
 		char *schemeandhost;
-		schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s%s:%d", scheme, host, port);
+		schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s://%s:%d", scheme, host, port);
 		ret = pam_putenv(pamh, schemeandhost);
 	}
 	if (ret == PAM_SUCCESS) {

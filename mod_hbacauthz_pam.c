@@ -33,16 +33,10 @@ static authz_status pam_hbac_authorize(request_rec * r, const char * pam_service
 			}
 		}
 		port = ap_get_server_port(r);
-		const char *host = apr_table_get(r->headers_in, "Host");
-		if(host!=NULL){
-			char *schemeandhost;
-			if(strchr(host,':')!=NULL){
-				schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s%s", scheme, host);
-			}else{
-				schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s%s:%d", scheme, host, port);
-			}
-			ret = pam_putenv(pamh, schemeandhost);
-		}
+		const char *host = r->server->server_hostname;
+		char *schemeandhost;
+		schemeandhost = apr_psprintf(r->pool, "schemeAndHost=%s%s:%d", scheme, host, port);
+		ret = pam_putenv(pamh, schemeandhost);
 	}
 	if (ret == PAM_SUCCESS) {
 		char *uri = apr_psprintf(r->pool, "URI=%s", r->uri);
